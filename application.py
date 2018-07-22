@@ -48,34 +48,38 @@ def register():
 
         # Ensures user provided all required fields
         if not user or not pword or not confirm:
-            return render_template("apology.html")
+            error = "Please enter all fields"
+            return render_template("apology.html", error=error)
 
         # Ensures password and confirmation match
         if not pword == confirm:
-            return render_template("apology.html")
+            error = "Passwords do not match"
+            return render_template("apology.html", error=error)
 
         # Generate a hash to be stored in database
         hash = generate_password_hash(pword)
 
         # Ensure user doesn't already exists
         test = db.execute("SELECT * FROM users WHERE username = :user",
-                            {"user": user}).fetchall()
+                            {"user": user}).fetchone()
 
-        if len(test) > 0:
-            return render_template("apology.html")
+        if test is not None:
+            error = "User already exists"
+            return render_template("apology.html", error=error)
 
         # Registers user
         db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
                     {"username": user, "hash": hash})
+        db.commit()
 
         # Grabs id to log user in
-        rows = db.execute("SELECT id FROM users WHERE username = :username",
-                            {"username": user})
-        row = list(rows)
+        rows = list(db.execute("SELECT * FROM users WHERE username = :username",
+                            {"username": user}))
 
-        session["user_id"] = row[0]["id"]
+        # Creates session for specific user
+        session["user_id"] = rows[0]["id"]
 
-        return render_template("index.html", row=row, ses=session["user_id"])
+        return redirect(url_for("index"))
 
     else:
         return render_template("register.html")
@@ -83,7 +87,29 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    """ Allow users to log in """
+
+    if request.method == "POST":
+        user = request.form.get("u")
+        pword = request.form.get("p")
+
+        if not user or not pword:
+            error = "Please enter all fields"
+            return render_template("apology.html", error=error)
+
+        check_user = list(db.execute("SELECT * FROM users WHERE username = :username",
+                            {"username": user}))
+
+        if check_password_hash(check_user[0]["hash"], pword) == False:
+            error = "Incorrect credentials"
+            return render_template("apology.html", error=error)
+
+        session["user_id"] = check_user[0]["id"]
+
+        return render_template("index.html", check=check_user[0]["id"], user=user)
+
+    else:
+        return render_template("login.html")
 
 
 @app.route("/search", methods=["GET", "POST"])
