@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, request
+from flask import Flask, session, render_template, request, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -110,6 +110,23 @@ def login():
 
     else:
         return render_template("login.html")
+
+
+@app.route("/api/<isbn>", methods=["GET", "POST"])
+def api(isbn):
+    """ Api access to information about the books in books table, as well as information about the book's reviews """
+
+    res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :isbn", {"isbn": isbn}))
+
+    # Add review_cound & average_score to api access
+
+    if len(res) != 1:
+        return jsonify(res)
+    else:
+        return jsonify(isbn=res[0]["isbn"],
+                        title=res[0]["title"],
+                        author=res[0]["author"],
+                        year=res[0]["year"])
 
 
 @app.route("/search", methods=["GET", "POST"])
