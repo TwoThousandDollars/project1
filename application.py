@@ -119,15 +119,15 @@ def search():
     """ Allow user to search for reviews about the books they like """
 
     if request.method == "POST":
-        q = request.form.get("q")
+        q = request.form.get("q").lower()
 
-        res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :q OR title LIKE :q OR author LIKE :q OR year LIKE :q LIMIT 10",
+        res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :q OR lower(title) LIKE :q OR lower(author) LIKE :q OR year LIKE :q LIMIT 10",
                             {"q": "%" + q + "%"}))
 
         # Ensures search exists in database
         if len(res) < 1:
             error = "Could not find any matching books."
-            return render_template("apology", error=error)
+            return render_template("apology.html", error=error)
 
         return render_template("results.html", res=res)
 
@@ -135,23 +135,19 @@ def search():
         return render_template("search.html")
 
 
-@app.route("/books", methods=["GET", "POST"])
-def books():
+@app.route("/books/<isbn>", methods=["GET", "POST"])
+def books(isbn):
     """ Displays all information about book """
 
+    book = list(db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}))
+
+    if len(book) < 1:
+        error = "Cannot find details on this book"
+        return render_template("apology.html", error=error)
+
+    res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
+
     if request.method == "GET":
-        arg = request.args.get("isbn")
-
-        if not arg:
-            return redirect("search")
-
-        book = list(db.execute("SELECT * FROM books WHERE isbn = :arg", {"arg": arg}))
-
-        if len(book) < 1:
-            error = "Cannot find details on this book"
-            return render_template("apology", error=error)
-
-        res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
 
         # TODO:
         # Show details about the reviews left on this site for this book
@@ -160,7 +156,11 @@ def books():
         return render_template("books.html", res=res)
 
     else:
-        return render_template("books.html")
+        score = int(request.form.get("score"))
+        review = request.form.get("review")
+
+        return render_template("review.html", score=score, review=review, res=res)
+
 
 
 @app.route("/api/<isbn>", methods=["GET", "POST"])
