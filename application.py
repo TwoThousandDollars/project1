@@ -93,6 +93,7 @@ def login():
         user = request.form.get("u")
         pword = request.form.get("p")
 
+        # Ensures user entered all required fields
         if not user or not pword:
             error = "Please enter all fields"
             return render_template("apology.html", error=error)
@@ -104,12 +105,62 @@ def login():
             error = "Incorrect credentials"
             return render_template("apology.html", error=error)
 
+        # Logs user in
         session["user_id"] = check_user[0]["id"]
 
         return render_template("index.html", check=check_user[0]["id"], user=user)
 
     else:
         return render_template("login.html")
+
+
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    """ Allow user to search for reviews about the books they like """
+
+    if request.method == "POST":
+        q = request.form.get("q")
+
+        res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :q OR title LIKE :q OR author LIKE :q OR year LIKE :q LIMIT 10",
+                            {"q": "%" + q + "%"}))
+
+        # Ensures search exists in database
+        if len(res) < 1:
+            error = "Could not find any matching books."
+            return render_template("apology", error=error)
+
+        return render_template("results.html", res=res)
+
+    else:
+        return render_template("search.html")
+
+
+@app.route("/books", methods=["GET", "POST"])
+def books():
+    """ Displays all information about book """
+
+    if request.method == "GET":
+        arg = request.args.get("isbn")
+
+        if not arg:
+            return redirect("search")
+
+        book = list(db.execute("SELECT * FROM books WHERE isbn = :arg", {"arg": arg}))
+
+        if len(book) < 1:
+            error = "Cannot find details on this book"
+            return render_template("apology", error=error)
+
+        res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
+
+        # TODO:
+        # Show details about the reviews left on this site for this book
+        # allow users to leave reviews for this book on this page
+
+        return render_template("books.html", res=res)
+
+    else:
+        return render_template("books.html")
 
 
 @app.route("/api/<isbn>", methods=["GET", "POST"])
@@ -124,16 +175,6 @@ def api(isbn):
         return jsonify(res)
     else:
         return jsonify(isbn=res[0]["isbn"],
-                        title=res[0]["title"],
-                        author=res[0]["author"],
-                        year=res[0]["year"])
-
-
-@app.route("/search", methods=["GET", "POST"])
-def search():
-    return render_template("search.html")
-
-
-@app.route("/books", methods=["GET", "POST"])
-def books():
-    return render_template("books.html")
+        title=res[0]["title"],
+        author=res[0]["author"],
+        year=res[0]["year"])
