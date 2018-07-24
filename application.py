@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, request
+from flask import Flask, session, render_template, request, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -93,6 +93,7 @@ def login():
         user = request.form.get("u")
         pword = request.form.get("p")
 
+        # Ensures user entered all required fields
         if not user or not pword:
             error = "Please enter all fields"
             return render_template("apology.html", error=error)
@@ -104,6 +105,7 @@ def login():
             error = "Incorrect credentials"
             return render_template("apology.html", error=error)
 
+        # Logs user in
         session["user_id"] = check_user[0]["id"]
 
         return render_template("index.html", check=check_user[0]["id"], user=user)
@@ -114,9 +116,65 @@ def login():
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
-    return render_template("search.html")
+    """ Allow user to search for reviews about the books they like """
+
+    if request.method == "POST":
+        q = request.form.get("q").lower()
+
+        res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :q OR lower(title) LIKE :q OR lower(author) LIKE :q OR year LIKE :q LIMIT 10",
+                            {"q": "%" + q + "%"}))
+
+        # Ensures search exists in database
+        if len(res) < 1:
+            error = "Could not find any matching books."
+            return render_template("apology.html", error=error)
+
+        return render_template("results.html", res=res)
+
+    else:
+        return render_template("search.html")
 
 
-@app.route("/books", methods=["GET", "POST"])
-def books():
-    return render_template("books.html")
+@app.route("/books/<isbn>", methods=["GET", "POST"])
+def books(isbn):
+    """ Displays all information about book """
+
+    book = list(db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}))
+
+    if len(book) < 1:
+        error = "Cannot find details on this book"
+        return render_template("apology.html", error=error)
+
+    res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
+
+    if request.method == "GET":
+
+        # TODO:
+        # Show details about the reviews left on this site for this book
+        # allow users to leave reviews for this book on this page
+
+        return render_template("books.html", res=res)
+
+    else:
+        score = int(request.form.get("score"))
+        review = request.form.get("review")
+
+        return render_template("review.html", score=score, review=review, res=res)
+
+
+
+@app.route("/api/<isbn>", methods=["GET", "POST"])
+def api(isbn):
+    """ Api access to information about the books in books table, as well as information about the book's reviews """
+
+    res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :isbn", {"isbn": isbn}))
+
+    # Add review_cound & average_score to api access
+
+    if len(res) != 1:
+        return jsonify(res)
+    else:
+        return jsonify(isbn=res[0]["isbn"],
+        title=res[0]["title"],
+        author=res[0]["author"],
+        year=res[0]["year"])
