@@ -1,6 +1,8 @@
 import os
 
-from flask import Flask, session, render_template, request, jsonify
+from helpers import get_reviews, login_required
+
+from flask import Flask, session, render_template, request, jsonify, redirect
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -113,6 +115,16 @@ def login():
     else:
         return render_template("login.html")
 
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    """ Log user out """
+
+    # Log user out
+    session.clear()
+
+    # Return user to homepage
+    return redirect("/")
+
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
@@ -147,19 +159,29 @@ def books(isbn):
 
     res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
 
-    if request.method == "GET":
+    if request.method == "POST":
+        if session["user_id"] is None:
+            error = "You must be logged in to leave a review"
+            return render_template("apology.html", error=error)
 
-        # TODO:
-        # Show details about the reviews left on this site for this book
-        # allow users to leave reviews for this book on this page
-
-        return render_template("books.html", res=res)
-
-    else:
         score = int(request.form.get("score"))
         review = request.form.get("review")
 
-        return render_template("review.html", score=score, review=review, res=res)
+        # Submit review
+        db.execute("INSERT INTO reviews (score, isbn, user_id, review) VALUES (:score, :isbn, :user_id, :review)",
+                    {"score": score, "isbn": isbn, "user_id": session["user_id"], "review": review})
+        db.commit()
+
+        # Gather reviews to display on page
+        reviews = get_reviews(db, isbn)
+
+        return render_template("books.html", res=res, reviews=reviews)
+
+    else:
+        reviews = get_reviews(db, isbn)
+        return render_template("books.html", res=res, reviews=reviews)
+
+
 
 
 
