@@ -189,7 +189,8 @@ def books(isbn):
 def api(isbn):
     """ Api access to information about the books in books table, as well as information about the book's reviews """
 
-    res = list(db.execute("SELECT * FROM books WHERE isbn LIKE :isbn", {"isbn": isbn}))
+    res = list(db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}))
+    stats = list(db.execute("SELECT AVG(score), COUNT(score) FROM reviews WHERE isbn = :isbn", {"isbn": isbn}))
 
     # Add review_cound & average_score to api access
 
@@ -199,4 +200,6 @@ def api(isbn):
         return jsonify(isbn=res[0]["isbn"],
         title=res[0]["title"],
         author=res[0]["author"],
-        year=res[0]["year"])
+        year=res[0]["year"],
+        review_count=stats[0][1],
+        average_score=float(stats[0][0]))
