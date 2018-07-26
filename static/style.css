@@ -1,4 +1,19 @@
 .result-head p {
   color: blue; }
 
+  div a, p {
+      text-decoration: none;
+      color: black;
+  }
+
+  div p:hover {
+      text-decoration: none;
+      color: black;
+  }
+
+  .bb-wrap {
+    background-color: blue;
+    width: 100%;
+  }
+
 /*# sourceMappingURL=style.css.map */

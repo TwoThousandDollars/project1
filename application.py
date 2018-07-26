@@ -1,4 +1,5 @@
 import os
+import requests
 
 from helpers import get_reviews, login_required
 
@@ -158,6 +159,9 @@ def books(isbn):
         return render_template("apology.html", error=error)
 
     res = {"isbn": book[0][0], "title": book[0][1], "author": book[0][2], "year": book[0][3]}
+    gr = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": KEY, "isbns": isbn})
+    g = gr.json()
+    # if gr is None TODO
 
     if request.method == "POST":
         if session["user_id"] is None:
@@ -175,11 +179,11 @@ def books(isbn):
         # Gather reviews to display on page
         reviews = get_reviews(db, isbn)
 
-        return render_template("books.html", res=res, reviews=reviews)
+        return render_template("books.html", res=res, reviews=reviews, gr=g["books"])
 
     else:
         reviews = get_reviews(db, isbn)
-        return render_template("books.html", res=res, reviews=reviews)
+        return render_template("books.html", res=res, reviews=reviews, gr=g["books"])
 
 
 
