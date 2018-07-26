@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+{% block content %}
+
+    {% for isbn, title, author, year in res %}
+    <div class="container">
+        <a href="{{ url_for('books', isbn=isbn) }}">
+            <div class="row">
+                <div class="col">
+                    <span class=".result-head"><p>{{ title }}</p></span>
+                    <span class=""><p>{{ author }}</p></span>
+                    <span class=""><p>{{ year }} - isbn {{ isbn }}</p></span>
+                </div>
+                <div class="col">
+                    <h2>hell</h2>
+                </div>
+                <div class="col">
+                    damn
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+
+{% endblock %}
+<!--  -->

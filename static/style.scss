@@ -1,0 +1,13 @@
+$primary-font: 'helvetica', sans-serif;
+$primary-color: blue;
+
+
+div a {
+    text-decoration: none;
+}
+
+.result-head {
+    p {
+        color: $primary-color;
+    }
+}

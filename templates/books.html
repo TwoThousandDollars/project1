@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {{ res.title }}
+{% endblock %}
+
+{% block content %}
+    {% if session.user_id %}
+    <form action="{{ url_for('books', isbn=res['isbn']) }}" method="post">
+        <div class="form-group">
+          <label for="sel1">Book Score:</label>
+            <select name="score" class="form-control" id="sel1">
+              <option>5</option>
+              <option>4</option>
+              <option>3</option>
+              <option>2</option>
+              <option>1</option>
+            </select>
+        </div>
+        <textarea name="review" class="form-control" rows="5"></textarea>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+    {% endif %}
+    {% if reviews %}
+    <div class="jumbotron">
+    {% for score, review,username in reviews %}
+    <div class="container-fluid">
+      <span class=""><p>{{ score }}</p></span>
+      <span class=""><p>{{ review }}</p></span>
+      <span class=""><p>by: {{ username }}</p></span>
+    </div>
+    {% endfor %}
+    {% endif %}
+    <p>GoodReads reviews</p>
+    <p>Reviews: {{ gr[0].work_reviews_count }}</p>
+    <p>Average Score:{{ gr[0].average_rating }}</p>
+    </div>
+{% endblock %}
