@@ -21,6 +21,9 @@
         <button class="btn btn-primary" type="submit">Submit</button>
     </form>
     {% endif %}
+    <p>GoodReads reviews</p>
+    <p>Reviews: {{ gr[0].work_reviews_count }}</p>
+    <p>Average Score:{{ gr[0].average_rating }}</p>
     {% if reviews %}
     <div class="jumbotron">
     {% for score, review,username in reviews %}
@@ -31,8 +34,5 @@
     </div>
     {% endfor %}
     {% endif %}
-    <p>GoodReads reviews</p>
-    <p>Reviews: {{ gr[0].work_reviews_count }}</p>
-    <p>Average Score:{{ gr[0].average_rating }}</p>
     </div>
 {% endblock %}

@@ -37,7 +37,9 @@ db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    res_no_log = list(db.execute("SELECT * FROM reviews ORDER BY reviews DESC LIMIT 10"))
+
+    return render_template("index.html", res=res_no_log)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -111,7 +113,7 @@ def login():
         # Logs user in
         session["user_id"] = check_user[0]["id"]
 
-        return render_template("index.html", check=check_user[0]["id"], user=user)
+        return redirect("/")
 
     else:
         return render_template("login.html")
@@ -166,6 +168,11 @@ def books(isbn):
     if request.method == "POST":
         if session["user_id"] is None:
             error = "You must be logged in to leave a review"
+            return render_template("apology.html", error=error)
+
+        res = list(db.execute("SELECT * FROM reviews WHERE user_id = :user_id", {"user_id": session["user_id"]}))
+        if len(res) > 1:
+            error = "Users may only leave one review per book"
             return render_template("apology.html", error=error)
 
         score = int(request.form.get("score"))

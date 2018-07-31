@@ -5,5 +5,26 @@
 {% endblock %}
 
 {% block content %}
-    
+  {% for score, isbn, user_id, review in res %}
+    <div class="container">
+        <a href="{{ url_for('books', isbn=isbn) }}">
+            <div class="row">
+                <div class="col">
+                    <span class=".result-head"><p>{{ score }}</p></span>
+                    <span class=""><p>{{ review }}</p></span>
+                    <span class=""><p>{{ title }}</p></span>
+                </div>
+                <div class="col">
+                    <h2>hell</h2>
+                </div>
+                <div class="col">
+                    damn
+                </div>
+            </div>
+        </a>
+    </div>
+  {% endfor %}
+
+
+
 {% endblock %}
